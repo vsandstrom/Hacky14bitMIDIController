@@ -3,19 +3,20 @@
 
 // number of faders to read from 
 #define COUNT 1
+// number of bits
+#define FOURTEEN 14
+// maximum value to normalize input tu
+#define RESOLUTION 16383
+// input reading point
+#define IN A0
 
-int fader0 = A0;
+// hardcoded values to general purpose midi out, 16 (coarse), 48 (fine)
+#define MSB 16
+#define LSB 48
 
-int val0 = 0;
-int prevVal = 0;
-int diff = 0;
-int maxDiff = 0;
-int MSB = 16;
-int LSB = MSB+32;
-int i = 0;
 
 // Responsive analog reader
-ResponsiveAnalogRead fAnalog0(fader0, true);
+ResponsiveAnalogRead reader(IN, true);
 
 int faders[COUNT] = {0};
 
@@ -29,53 +30,56 @@ int faders[COUNT] = {0};
     --|                              |
 */
 
-#define DEBUG(val, lsb, msb) //Serial.printf("VAL: %i\tLSB: %i\tMSB: %i\n", val, lsb, msb);
-#define DIFF_DEBUG(val, prev_val, diff, max_diff) // diff = abs(val0 - prev_val); if (diff > maxDiff) {maxDiff = diff; Serial.printf("diff: %i\n", maxDiff);}
-
+// Turn debug on by using -DDEBUG at compile time. ( -D "#defines" DEBUG )
+#ifdef DEBUG
+  #define D(x) x
+#else
+  #define D(x) 
+#endif
 
 void setup() {
   // Set teensy to use 14bit and the analog reader to use 16383 as resolution.
-  analogReadResolution(14);
-  fAnalog0.setAnalogResolution(16383);
+  analogReadResolution(FOURTEEN);
+  reader.setAnalogResolution(RESOLUTION);
   Serial.begin(31250);
 
 }
 
+
+int i = 0;
+
 void loop() {
-  fAnalog0.update();
+  reader.update();
   
-  // Sample 32 values
-  if (i < 32) {
-    i++;
+  // Sample 32 values for each fader
+    if (i < 32) {
+        for (int j = 0; j < COUNT; ++j) {
 
-    for (int j = 0; j < COUNT; ++j) {
-
-
-      // Insert MULTIPLEX-logic here <--------------------------------------------------
-
-
-      faders[j] += map(fAnalog0.getValue(), 1, 16382, 0, 16383);
-    }
-  } else {
-    i = 0;
-    
-
-    for (int j = 0; j < COUNT; ++j) {
+        // Insert MULTIPLEX-logic here <--------------------------------------------------
+        
+        faders[j] += map(reader.getValue(), 1, 16382, 0, 16383);
+        }
+        i++;
+    } else {
+        i = 0;
+        for (int j = 0; j < COUNT; ++j) {
 
 
-      // Shift value by 5, "dividing by 32"
-      // remove bad values, if negative values or values bigger than 16383
-      faders[j] = removeBadValues(faders[j] >> 5);
+        // Shift value by 5, "dividing by 32"
+        // remove bad values, if negative values or values bigger than 16383
+        faders[j] = removeBadValues(faders[j] >> 5);
 
-      // send CC to correct midi destination, sequencial LSB and MSB.
-      usbMIDI.sendControlChange(LSB + j, faders[j] & 127, 1);
-      usbMIDI.sendControlChange(MSB + j, (faders[j] >> 7) & 127, 1);
+        // send CC to correct midi destination, sequencial LSB and MSB.
+        usbMIDI.sendControlChange(LSB + j, faders[j] & 127, 1);
+        usbMIDI.sendControlChange(MSB + j, (faders[j] >> 7) & 127, 1);
 
-    } 
+        // Will only run if -DDEBUG flag is used at compile time
+        D(Serial.printf("VAL: %i\tLSB: %i\tMSB: %i\n", faders[j], (faders[j] & 0x7F), ((faders[j] >> 7) & 0x7F)));
 
+        } 
     delay(1);
 
-  }
+    }
 }
 
 int removeBadValues(int val) {
