@@ -21,13 +21,13 @@ ResponsiveAnalogRead reader(IN, true);
 int faders[COUNT] = {0};
 
 /*
-
       // ALPS FADER
 
     --| READ_OUT                V_IN |--
     --| GND                          |
     --|                              |--
     --|                              |
+    
 */
 
 // Turn debug on by using -DDEBUG at compile time. ( -D "#defines" DEBUG )

@@ -9,3 +9,6 @@ It is not perfect, but it might work better than nothing.<br>
 The project is influenced A LOT from these projects: <br>
 https://github.com/16n-faderbank/16n/ <br>
 https://madskjeldgaard.dk/posts/14bit-midi-teensy-supercollider/
+
+### TODO:
+Set name for midi-device.
