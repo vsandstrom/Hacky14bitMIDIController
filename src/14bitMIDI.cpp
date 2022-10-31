@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include <ResponsiveAnalogRead.h>
 //#include "usb_name.c"
 
@@ -37,6 +38,8 @@ int faders[COUNT] = {0};
   #define D(x) 
 #endif
 
+int removeBadValues(int);
+
 void setup() {
   // Set teensy to use 14bit and the analog reader to use 16383 as resolution.
   analogReadResolution(FOURTEEN);
@@ -57,7 +60,7 @@ void loop() {
 
         // Insert MULTIPLEX-logic here <--------------------------------------------------
         
-        faders[j] += map(reader.getValue(), 1, 16382, 0, 16383);
+            faders[j] += map(reader.getValue(), 1, 16382, 0, 16383);
         }
         i++;
     } else {
